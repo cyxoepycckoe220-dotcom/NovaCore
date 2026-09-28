@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovaCore — Отправка сообщений</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 {
+            color: #fff;
+            text-align: center;
+            font-size: 32px;
+            background: linear-gradient(90deg, #a855f7, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        
+        label {
+            display: block;
+            color: #ccc;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+            resize: vertical;
+            min-height: 150px;
+            font-family: inherit;
+        }
+        
+        textarea:focus {
+            border-color: #a855f7;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+        }
+        
+        .counter {
+            text-align: right;
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #a855f7, #6366f1);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(168, 85, 247, 0.5);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            display: block;
+        }
+        
+        .status.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            display: block;
+        }
+        
+        .info {
+            color: #666;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 NovaCore</h1>
+        <p class="subtitle">Отправка сообщений в Build Logic</p>
+        
+        <div class="form-group">
+            <label>💬 Сообщение:</label>
+            <textarea id="message" placeholder="Напиши сообщение..." maxlength="200" oninput="updateCounter()"></textarea>
+            <div class="counter"><span id="count">0</span> / 200</div>
+        </div>
+        
+        <button id="sendBtn" onclick="sendMessage()">📤 ОТПРАВИТЬ</button>
+        
+        <div id="status" class="status"></div>
+        
+        <p class="info">NovaCore © 2026</p>
+    </div>
+    
+    <script>
+        // ⚠️ ЗАМЕНИ НА СВОЙ URL FIREBASE!
+        const FIREBASE_URL = "https://novacore-fcd6a-default-rtdb.firebaseio.com";
+        
+        function updateCounter() {
+            const msg = document.getElementById('message').value;
+            document.getElementById('count').textContent = msg.length;
+        }
+        
+        async function sendMessage() {
+            const message = document.getElementById('message').value.trim();
+            const status = document.getElementById('status');
+            const btn = document.getElementById('sendBtn');
+            
+            // Проверка
+            if (!message) {
+                status.className = 'status error';
+                status.textContent = '❌ Напиши сообщение!';
+                return;
+            }
+            
+            // Блокируем кнопку
+            btn.disabled = true;
+            status.className = 'status';
+            status.textContent = '⏳ Отправка...';
+            status.style.display = 'block';
+            
+            try {
+                const response = await fetch(FIREBASE_URL + '/messages.json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        time: new Date().toLocaleTimeString('ru-RU'),
+                        timestamp: Date.now()
+                    })
+                });
+                
+                if (response.ok) {
+                    status.className = 'status success';
+                    status.textContent = '✅ Отправлено! Появится в Build Logic';
+                    document.getElementById('message').value = '';
+                    updateCounter();
+                } else {
+                    status.className = 'status error';
+                    status.textContent = '❌ Ошибка отправки';
+                }
+            } catch (e) {
+                status.className = 'status error';
+                status.textContent = '❌ Ошибка: ' + e.message;
+            }
+            
+            btn.disabled = false;
+        }
+        
+        // Ctrl+Enter для отправки
+        document.getElementById('message').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
