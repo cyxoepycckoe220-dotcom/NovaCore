@@ -185,11 +185,7 @@
                 const response = await fetch(FIREBASE_URL + '/last.json', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        value: message,
-        time: new Date().toLocaleTimeString('ru-RU'),
-        timestamp: Date.now()
-    })
+    body: JSON.stringify(message)  // Просто текст, без обёртки
 });
                 
                 if (response.ok) {
