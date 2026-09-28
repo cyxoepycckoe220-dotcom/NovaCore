@@ -182,15 +182,15 @@
             status.style.display = 'block';
             
             try {
-                const response = await fetch(FIREBASE_URL + '/messages.json', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: message,
-                        time: new Date().toLocaleTimeString('ru-RU'),
-                        timestamp: Date.now()
-                    })
-                });
+                const response = await fetch(FIREBASE_URL + '/last.json', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        value: message,
+        time: new Date().toLocaleTimeString('ru-RU'),
+        timestamp: Date.now()
+    })
+});
                 
                 if (response.ok) {
                     status.className = 'status success';
