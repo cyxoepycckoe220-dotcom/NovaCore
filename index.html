@@ -81,8 +81,14 @@
             margin-top: 5px;
         }
         
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
         button {
-            width: 100%;
+            flex: 1;
             padding: 18px;
             background: linear-gradient(135deg, #a855f7, #6366f1);
             border: none;
@@ -92,7 +98,6 @@
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
-            margin-top: 10px;
         }
         
         button:hover {
@@ -103,6 +108,10 @@
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+        
+        button.clear {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
         }
         
         .status {
@@ -147,7 +156,10 @@
             <div class="counter"><span id="count">0</span> / 200</div>
         </div>
         
-        <button id="sendBtn" onclick="sendMessage()">📤 ОТПРАВИТЬ</button>
+        <div class="buttons">
+            <button id="sendBtn" onclick="sendMessage()">📤 ОТПРАВИТЬ</button>
+            <button class="clear" onclick="clearMessage()">🗑 ОЧИСТИТЬ</button>
+        </div>
         
         <div id="status" class="status"></div>
         
@@ -163,46 +175,65 @@
             document.getElementById('count').textContent = msg.length;
         }
         
+        function showStatus(text, type) {
+            const status = document.getElementById('status');
+            status.className = 'status ' + type;
+            status.textContent = text;
+        }
+        
         async function sendMessage() {
             const message = document.getElementById('message').value.trim();
-            const status = document.getElementById('status');
             const btn = document.getElementById('sendBtn');
             
-            // Проверка
             if (!message) {
-                status.className = 'status error';
-                status.textContent = '❌ Напиши сообщение!';
+                showStatus('❌ Напиши сообщение!', 'error');
                 return;
             }
             
-            // Блокируем кнопку
             btn.disabled = true;
-            status.className = 'status';
-            status.textContent = '⏳ Отправка...';
-            status.style.display = 'block';
+            showStatus('⏳ Отправка...', '');
             
             try {
+                // ✅ ВАЖНО: отправляем ТОЛЬКО {value: "текст"}
                 const response = await fetch(FIREBASE_URL + '/last.json', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(message)  // Просто текст, без обёртки
-});
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: message })
+                });
                 
                 if (response.ok) {
-                    status.className = 'status success';
-                    status.textContent = '✅ Отправлено! Появится в Build Logic';
+                    showStatus('✅ Отправлено! Появится в Build Logic', 'success');
                     document.getElementById('message').value = '';
                     updateCounter();
                 } else {
-                    status.className = 'status error';
-                    status.textContent = '❌ Ошибка отправки';
+                    showStatus('❌ Ошибка отправки: ' + response.status, 'error');
                 }
             } catch (e) {
-                status.className = 'status error';
-                status.textContent = '❌ Ошибка: ' + e.message;
+                showStatus('❌ Ошибка: ' + e.message, 'error');
             }
             
             btn.disabled = false;
+        }
+        
+        async function clearMessage() {
+            try {
+                // Записываем пустую строку — панель очистится
+                const response = await fetch(FIREBASE_URL + '/last.json', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: "" })
+                });
+                
+                if (response.ok) {
+                    showStatus('🗑 Панель очищена', 'success');
+                    document.getElementById('message').value = '';
+                    updateCounter();
+                } else {
+                    showStatus('❌ Ошибка очистки', 'error');
+                }
+            } catch (e) {
+                showStatus('❌ Ошибка: ' + e.message, 'error');
+            }
         }
         
         // Ctrl+Enter для отправки
